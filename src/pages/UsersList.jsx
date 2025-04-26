@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import {
   Table,
   TableBody,
@@ -23,6 +22,7 @@ import {
 } from "@mui/material";
 import { Edit, Delete, Visibility } from "@mui/icons-material";
 import { useNotification } from "../context/NotificationContext";
+import { userService } from "../services/api";
 
 function UsersList() {
   const [users, setUsers] = useState([]);
@@ -31,24 +31,16 @@ function UsersList() {
   const [totalPages, setTotalPages] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const API_URL = import.meta.env.VITE_API_URL;
-  const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/users`, {
-        params: {
-          page,
-          search,
-          limit: 5,
-        },
-        headers: { "Content-Type": "application/json" },
-      });
-      setUsers(response.data.data.users);
-      setTotalPages(response.data.pagination.totalPages);
+      const response = await userService.getUsers(page, search);
+      setUsers(response.data.users);
+      setTotalPages(response.pagination.totalPages);
     } catch (error) {
       console.error("Error fetching users:", error);
       showNotification(
@@ -76,9 +68,7 @@ function UsersList() {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`${API_URL}/users/${userToDelete._id}`, {
-        headers: { "Content-Type": "application/json" },
-      });
+      await userService.deleteUser(userToDelete._id);
       showNotification("User deleted successfully");
       fetchUsers();
       setDeleteDialogOpen(false);

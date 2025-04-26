@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 import {
   Card,
   CardContent,
@@ -11,8 +10,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import { useNotification } from "../context/NotificationContext";
+import { userService } from "../services/api";
 
 function EditUser() {
   const [user, setUser] = useState({
@@ -20,22 +21,26 @@ function EditUser() {
     email: "",
     role: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchUser = async () => {
+      setLoading(true);
       try {
-        const response = await axios.get(`${API_URL}/users/${id}`);
-        setUser(response.data.data.user);
+        const response = await userService.getUserById(id);
+        setUser(response.data.user);
       } catch (error) {
         showNotification(
           error.response?.data?.message || "Error fetching user",
           "error"
         );
         navigate("/users");
+      } finally {
+        setLoading(false);
       }
     };
     fetchUser();
@@ -43,8 +48,9 @@ function EditUser() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
-      await axios.put(`${API_URL}/users/${id}`, user);
+      await userService.updateUser(id, user);
       showNotification("User updated successfully");
       navigate(`/users/${id}`);
     } catch (error) {
@@ -52,6 +58,8 @@ function EditUser() {
         error.response?.data?.message || "Error updating user",
         "error"
       );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -61,6 +69,13 @@ function EditUser() {
       [e.target.name]: e.target.value,
     });
   };
+
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+        <CircularProgress />
+      </Box>
+    );
 
   return (
     <Card>
@@ -97,10 +112,19 @@ function EditUser() {
           </FormControl>
 
           <Box sx={{ mt: 2 }}>
-            <Button type="submit" variant="contained" sx={{ mr: 1 }}>
-              Save Changes
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ mr: 1 }}
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Save Changes"}
             </Button>
-            <Button variant="outlined" onClick={() => navigate(`/users/${id}`)}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(`/users/${id}`)}
+              disabled={submitting}
+            >
               Cancel
             </Button>
           </Box>
