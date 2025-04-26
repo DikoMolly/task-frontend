@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import {
   Card,
   CardContent,
@@ -11,49 +11,56 @@ import {
   InputLabel,
   Select,
   MenuItem,
-} from '@mui/material'
-import { useNotification } from '../context/NotificationContext'
+} from "@mui/material";
+import { useNotification } from "../context/NotificationContext";
 
 function EditUser() {
   const [user, setUser] = useState({
-    name: '',
-    email: '',
-    role: ''
-  })
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { showNotification } = useNotification()
+    name: "",
+    email: "",
+    role: "",
+  });
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { showNotification } = useNotification();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/users/${id}`)
-        setUser(response.data.data.user)
+        const response = await axios.get(`${API_URL}/users/${id}`);
+        setUser(response.data.data.user);
       } catch (error) {
-        showNotification(error.response?.data?.message || 'Error fetching user', 'error')
-        navigate('/users')
+        showNotification(
+          error.response?.data?.message || "Error fetching user",
+          "error"
+        );
+        navigate("/users");
       }
-    }
-    fetchUser()
-  }, [id])
+    };
+    fetchUser();
+  }, [id]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      await axios.put(`http://localhost:3000/api/users/${id}`, user)
-      showNotification('User updated successfully')
-      navigate(`/users/${id}`)
+      await axios.put(`${API_URL}/users/${id}`, user);
+      showNotification("User updated successfully");
+      navigate(`/users/${id}`);
     } catch (error) {
-      showNotification(error.response?.data?.message || 'Error updating user', 'error')
+      showNotification(
+        error.response?.data?.message || "Error updating user",
+        "error"
+      );
     }
-  }
+  };
 
   const handleChange = (e) => {
     setUser({
       ...user,
-      [e.target.name]: e.target.value
-    })
-  }
+      [e.target.name]: e.target.value,
+    });
+  };
 
   return (
     <Card>
@@ -88,26 +95,19 @@ function EditUser() {
               <MenuItem value="admin">Admin</MenuItem>
             </Select>
           </FormControl>
-          
+
           <Box sx={{ mt: 2 }}>
-            <Button 
-              type="submit" 
-              variant="contained" 
-              sx={{ mr: 1 }}
-            >
+            <Button type="submit" variant="contained" sx={{ mr: 1 }}>
               Save Changes
             </Button>
-            <Button 
-              variant="outlined" 
-              onClick={() => navigate(`/users/${id}`)}
-            >
+            <Button variant="outlined" onClick={() => navigate(`/users/${id}`)}>
               Cancel
             </Button>
           </Box>
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
 
-export default EditUser 
+export default EditUser;

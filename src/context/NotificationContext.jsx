@@ -21,6 +21,7 @@ export function NotificationProvider({ children }) {
   const hideNotification = () => {
     setNotification({
       ...notification,
+      
       open: false
     })
   }

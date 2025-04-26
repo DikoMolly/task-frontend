@@ -19,6 +19,7 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  CircularProgress,
 } from "@mui/material";
 import { Edit, Delete, Visibility } from "@mui/icons-material";
 import { useNotification } from "../context/NotificationContext";
@@ -32,23 +33,30 @@ function UsersList() {
   const [userToDelete, setUserToDelete] = useState(null);
   const navigate = useNavigate();
   const { showNotification } = useNotification();
+  const API_URL = import.meta.env.VITE_API_URL;
+  const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:3000/api/users`, {
+      const response = await axios.get(`${API_URL}/users`, {
         params: {
           page,
           search,
           limit: 5,
         },
+        headers: { "Content-Type": "application/json" },
       });
       setUsers(response.data.data.users);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
+      console.error("Error fetching users:", error);
       showNotification(
         error.response?.data?.message || "Error fetching users",
         "error"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -68,7 +76,9 @@ function UsersList() {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`http://localhost:3000/api/users/${userToDelete._id}`);
+      await axios.delete(`${API_URL}/users/${userToDelete._id}`, {
+        headers: { "Content-Type": "application/json" },
+      });
       showNotification("User deleted successfully");
       fetchUsers();
       setDeleteDialogOpen(false);
@@ -94,38 +104,44 @@ function UsersList() {
       </Box>
 
       <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user._id}>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.role}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => navigate(`/users/${user._id}`)}>
-                    <Visibility />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => navigate(`/users/${user._id}/edit`)}
-                  >
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDeleteClick(user)}>
-                    <Delete />
-                  </IconButton>
-                </TableCell>
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user._id}>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => navigate(`/users/${user._id}`)}>
+                      <Visibility />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => navigate(`/users/${user._id}/edit`)}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton onClick={() => handleDeleteClick(user)}>
+                      <Delete />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </TableContainer>
 
       <Box sx={{ mt: 3, display: "flex", justifyContent: "center" }}>
